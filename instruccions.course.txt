@@ -1,0 +1,216 @@
+{{ configuracion del entorno de programacion }}
+
+1.- Install composer {via brew}
+2.- Install git
+3.- Install laravel 
+4.- Install XAMPP 
+
+ruta 
+    $ cd /Applications/XAMPP/htdocs/
+crear proyecto
+    composer create-project laravel/laravel nombre-del-proyecto
+    $ cd nombre-del-proyecto
+
+Configuracion de virtual host
+    /Applications/XAMPP/xamppfiles/etc/extra/httpd-vhosts.conf
+
+        <VirtualHost *:80>
+            DocumentRoot "/Applications/XAMPP/xamppfiles/htdocs/lsapp/public"
+            ServerName lsapp.me
+        </VirtualHost>
+
+        <VirtualHost *:80>
+            DocumentRoot "/Applications/XAMPP/xamppfiles/htdocs"
+            ServerName localhost
+        </VirtualHost>
+   
+agregar ruta al dns local
+    $sudo nano /etc/hosts 
+
+    127.0.0.1   lsapp.me
+descomentar la linea 488
+    ruta
+    /Applications/XAMPP/xamppfiles/etc/httpd.conf
+
+    # Virtual hosts
+488 Include etc/extra/httpd-vhosts.conf
+
+
+{{ Programacion }}
+ 
+ *** Rutas **
+    todas las rutas se definen en el archivo web.php dentro de routes 
+    routes/web.php 
+
+    Route::get('/', function () {
+        return view('welcome');
+    });
+    
+    get es el metodo HTTP y '/' el inicio del proyecto  
+    el return view regresa una vista welcome
+    donde el welcome se refiere al archivo welcome.blade.php que se encuentra en resources/welcome.blade.php
+    en dado caso que se encuentre en un folder ejemplo resources/paginas/welcome.blade.php la sintaxis seria 
+
+    return view('paginas.welcome');
+
+    las rutas definidas como 
+    Route::get('/user', 'UserController@index');
+
+    accesible desde la ruta 
+    http://your-app.test/user
+
+
+    rutas dinamicas son definidas con parametros dentro de {corchetes}  de la siguiente manera
+    Route::get('posts/{post}/comments/{comment}', function ($postId, $commentId) {
+        //
+    });
+    las rutas no pueden contener caracteres especiales ni -{guion} pero si _{guion bajo}
+
+    rutas dinamicas opcionales se definen con ? al final del parametro y se debe de especificar en la function
+
+    Route::get('user/{name?}', function ($name = null) {
+        return $name;
+    });
+
+    Route::get('user/{name?}', function ($name = 'John') {
+        return $name;
+    });
+
+    filtros con expresiones regular para los parametros 
+    Route::get('user/{name}', function ($name) {
+        //
+    })->where('name', '[A-Za-z]+');
+
+    Route::get('user/{id}', function ($id) {
+        //
+    })->where('id', '[0-9]+');
+
+    Route::get('user/{id}/{name}', function ($id, $name) {
+        //
+    })->where(['id' => '[0-9]+', 'name' => '[a-z]+']);
+*
+
+*** Controladores con artisan *** 
+    $php artisan make:controller PagesController
+    La ruta donde se genera el archivo es app/Http/Controllers/PostsController.php
+
+    public function index(){
+        $title = 'welcome';
+        return view('pages.index',compact('title)); //un valor
+        return view('pages.index')->with('title',$title);// un valor 
+        $data = array(
+            'title' => 'Services',
+            'services'=> array(
+                'SEO',
+                'Programming',
+                'Example'
+            )
+
+        );
+        return view('pages.index')->with($data);// paso de un array
+    }
+    para hablar a este metodos se especifica en routes/web.php
+    Route::get("/", "PagesController@index");
+    // Motor de templates blade se Explica mas abajo
+
+
+    $php artisan make:controller PostsController --resource
+
+    esto generea todas las funciones necesarias para un CRUD
+*
+
+** Blade **
+    Definiendo el layout
+    Todo las vistas deben de estar en resources/view/
+
+    todas deben de tener el nombre del archivo seguido de .blade.php
+    todo lo que este detro de {{ }} doble corchete es codigo php ejecutable 
+
+    dentro de view/layouts 
+    app.blade.php
+    
+    ...
+    <head>
+        <link rel="stylesheet" href="{{ asset('css/app.css') }}"> // asset se usa para hacer referencia public css la carpeta y el archivo app.css laravel por defecto es  bootstrap
+    </head>
+    <body>
+        @include('inc.navbar') // sirve para añadir una parte de html contenida en la carpeta inc/navbar.blade.php
+
+        @yield('content') // se define el contenido que ira cuando se defina en las vistas hijas 
+    </body>
+    index.blade.php
+    @extends('layouts.app)
+
+    @section('content)    
+       // valores pasados por compact o with
+       <h1>{{$title}} </h1>
+       @if (count($services) === 1)
+            I have one record!
+        @elseif (count($records) > 1)
+            <ul>
+                @foreach($services as $service)
+                    <li>{{service}}</li>
+                @endforeach
+            </ul>
+        @else
+            I don't have any records!
+        @endif
+        //.....
+    @endsection
+
+* 
+
+
+*** SASS * 
+    resources/SASS
+    
+    para correr el sass bootstrap se necesita correr el npm install en la raiz del proyecto
+    npm install 
+    npm run dev
+    npm run watch
+    
+*
+
+** Database * 
+    create database mysql 
+    $php artisan make:controller PostsController
+    $php artisan make:model Post -m 
+
+    // database/migrations date_auto_gen_create_post_table 
+
+    public function up(){
+        ..
+        $table->string('title');
+        $table->mediumText('body');
+        ..
+    }
+
+    //.env 
+    DB_DATABASE=lsapp
+    DB_USERNAME=root
+    DB_PASSWORD=
+
+    // app/Http/Providers/AppServiceProvider
+     incluir
+    use Illuminate\Support\Facades\Schema;
+
+    public function boot(){
+        Schema::defaultStringLength(191);
+    }
+
+    // correr la migracion
+    $php artisan migrate
+    esto genera tablas que estan definidas por clases en database/migrations
+*
+
+** tinker
+    interaccion con la BD
+        $php artisan tinker
+        >>> App\Post::count();
+        => 0
+        >>> $post = new App\Post();
+        >>> post->title ='post';
+        >>> $post->body = 'this is test';
+        >>> $post->save();
+        //todo esto es para insertar registros en la bd por medio de tinker
+*
