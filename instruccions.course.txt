@@ -115,7 +115,8 @@ descomentar la linea 488
 
 
     $php artisan make:controller PostsController --resource
-
+    routes/web.php
+    Route::resource('posts','PostsController');
     esto generea todas las funciones necesarias para un CRUD
 *
 
