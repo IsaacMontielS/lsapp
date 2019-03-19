@@ -13,8 +13,30 @@
                             {{ session('status') }}
                         </div>
                     @endif
-
-                    You are logged in!
+                    <a href="/posts/create" class="btn btn-primary"> Crear Publicaci&oacute;n</a>
+                    <hr>
+                    <h3>Panel de Publicaciones</h3>
+                    @if (count($posts)>0)
+                        <table class="table table-striped">
+                            <tr>
+                                <th>Title</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            @foreach ($posts as $post)
+                            <tr>
+                                <td>{{$post->title}}</td>
+                                <td><a href="/posts/{{$post->id}}/edit" class="btn btn-secondary">Editar</a></td>
+                                <td>{!! Form::open(['action'=> ['PostsController@destroy',$post->id], 'method' =>'POST' ,'class' => 'float-right'])!!}
+                                        {!! Form::hidden('_method','DELETE')!!}
+                                        {!!Form::submit('Delete',['class' =>'btn btn-danger'])!!}
+                                    {!!Form::close()!!}</td>
+                            </tr>
+                            @endforeach
+                        </table>
+                    @else
+                    <p>No has publicado art&iacute;culos</p>
+                    @endif
                 </div>
             </div>
         </div>
